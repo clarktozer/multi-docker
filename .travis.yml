@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t clarktozer/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true clarktozer/react-test npm test
+
+after_success:
+  - docker build -t clarktozer/multi-client ./client
+  - docker build -t clarktozer/multi-nginx ./nginx
+  - docker build -t clarktozer/multi-server ./server
+  - docker build -t clarktozer/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push clarktozer/multi-client
+  - docker push clarktozer/multi-nginx
+  - docker push clarktozer/multi-server
+  - docker push clarktozer/multi-worker
